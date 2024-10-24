@@ -6,7 +6,7 @@ const { randomUUID } = require('crypto');
 
 const APP = express();
 const HTTP_SERVER = http.createServer(APP);
-const SERVER = new Server(HTTP_SERVER);
+const IO_SERVER = new Server(HTTP_SERVER);
 const PORT = 2108;
 
 APP.use(express.static(path.join(__dirname, '/public')));
@@ -21,6 +21,13 @@ HTTP_SERVER.listen(PORT, () => {
     console.log('\nSERVER ONLINE IN:', `localhost:${PORT}`);
 });
 
-SERVER.on(('connection'), (socket) => {
+IO_SERVER.on(('connection'), (socket) => {
+    
+    socket.on('USER_AUTH', (received, callback) => {
+        
+        console.log('received: ', received);
+        
+        callback && callback()
+    });
 
 });
