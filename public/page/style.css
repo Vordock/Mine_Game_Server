@@ -1,0 +1,52 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+#game-container {
+    display: grid;
+    gap: 5px;
+    width: 260px;
+    margin: 20px auto;
+    grid-template-columns: repeat(4, 60px);
+}
+
+.cell {
+    width: 60px;
+    height: 60px;
+    background-color: lightgray;
+    border: 1px solid #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.revealed-cell{
+    background-color: white;
+}
+
+.bet-container {
+    margin: 10px 0;
+}
+
+#bet-input {
+    width: 100px; /* Ajuste conforme necessário */
+    padding: 5px;
+    font-size: 16px;
+}
+
+
+.button-container {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}

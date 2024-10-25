@@ -3,19 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Star Hunter</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>
-        That's why
-    </h1>
-    <p>
-        Lorem Ipsum is simply dummy text of the printing and typesetting industry. 
-        Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, 
-        when an unknown printer took a galley of type and scrambled it to make a type specimen book. 
-        It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. 
-        It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, 
-        and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-    </p>
+    <h1>Find the Stars!</h1>
+    <h2 id="balance-display">Balance:</h2>
+    <div id="game-container"></div>
+    <p id="withdraw-display">Cashout: 0</p>
+
+    <div class="bet-container">
+        <label for="bet-input">Valor da Aposta:</label>
+        <input type="number" id="bet-input" min="1" step="1" placeholder="Insira sua aposta" />
+    </div>
+
+    <div class="button-container">
+        <button id="withdraw-button" disabled>Cashout</button>
+        <button id="bet-button">Bet</button>
+        <button id="restart-button">Reiniciar Jogo</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>

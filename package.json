@@ -11,12 +11,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "express": "^4.21.1",
     "http": "^0.0.1-security",
     "mine_game_server": "file:",
     "nodemon": "^3.1.7",
     "path": "^0.12.7",
-    "socket.io": "^4.8.0"
+    "socket.io": "^4.8.0",
+    "socket.io-client": "^4.8.1"
   }
 }
