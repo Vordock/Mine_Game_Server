@@ -25,7 +25,7 @@ SOCKET.on('connect', () => {
         userAuthenticated = response.status === 1;
 
         if (response.status === 1) {
-            DrawBoard(response.grid_size);
+            DrawBoard(response.board_size);
         }
     })
 
