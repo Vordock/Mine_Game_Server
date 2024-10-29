@@ -31,6 +31,10 @@ body {
     background-color: rgb(173, 48, 48);
 }
 
+.blocked{
+    background-color: rgba(128, 128, 128, 0.418);
+}
+
 .bet-container {
     margin: 10px 0;
 }
@@ -41,6 +45,11 @@ body {
     font-size: 16px;
 }
 
+#feedback-display{
+    margin-top: 50px;
+    font-size: 24px;
+    text-align: center;
+}
 
 .button-container {
     display: flex;

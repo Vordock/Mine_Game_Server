@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
+const { randomUUID } = require('crypto');
 //const cors = require('cors');
 
 const APP = express();
@@ -28,18 +29,18 @@ APP.get('/games/9', (req, res) => res.sendFile(path.join(__dirname, 'games/9/ind
 class User {
     constructor(name) {
         this.name = name;
-        this.current_balance = 3521;
+        this.current_balance = '3521';
         this.current_bet_id = '';
         this.current_bet_value = 0;
-        this.current_stars = 0;
+        this.current_cash_count = 0;
         this.current_cashout = 0;
     }
 
     ResetData() {
-        this.current_balance = 3521;
+        this.current_balance = '3521';
         this.current_bet_id = '';
         this.current_bet_value = 0;
-        this.current_stars = 0;
+        this.current_cash_count = 0;
         this.current_cashout = 0;
     }
 }
@@ -95,7 +96,7 @@ IO_SERVER.on('connection', (_socket) => {
 
         } else if (gameBoard[index] === 'cash') {
             result = 'cash';
-            user.current_stars++;
+            user.current_cash_count++;
 
         } else {
             result = 'empty';
@@ -112,18 +113,42 @@ IO_SERVER.on('connection', (_socket) => {
         }
     });
 
-    _socket.on('BET', (callback) => {
-        
-        callback && callback({status: 1, });
+    _socket.on('PLACE_BET', (data, callback) => {
+
+        let numericBalance = parseFloat(user.current_balance); //so pra garantir que ta lidando com numeros
+
+        const NEW_BET_ID = randomUUID();
+        user.current_bet_id = NEW_BET_ID;
+
+        console.log('\nAposta recebida:', data.bet_value);
+
+        if (numericBalance >= data.bet_value) {
+            numericBalance -= data.bet_value;
+
+            user.current_balance = numericBalance.toFixed(2);
+            console.log('Novo saldo:', user.current_balance);
+
+            callback && callback({ status: 1, bet_id: user.current_bet_id, balance: user.current_balance});
+
+        } else {
+            console.log('\n  Not Enough Balance!:', user.current_balance);
+
+            callback && callback({ status: 0, message: 'Player balance is not enough.' });
+        }
+
     });
 
     // Evento de saque
-    _socket.on('CASHOUT', (data, callback) => {
-        if (user.current_stars > 0 && data.bet_id === user.bet_id) {
-            callback && callback({status: 1, cashout: user.current_cashout});
+    _socket.on('PLACE_CASHOUT', (data, callback) => {
+        if (user.current_cash_count > 0 && data.bet_id === user.bet_id) {
+            callback && callback({ status: 1, cashout_value: user.current_cashout, balance: user.current_balance });
+            setTimeout(() => {
+                CreateGameBoard();
+            }, 1000);
+        } else{
+            callback && callback({ status: 0, message: 'Invalid Bet ID!'});
         }
 
-        //createGameBoard(); // Reiniciar o jogo após o saque
     });
 
     _socket.on('disconnect', () => {
