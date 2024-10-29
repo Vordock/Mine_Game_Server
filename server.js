@@ -71,21 +71,24 @@ IO_SERVER.on('connection', (_socket) => {
         //console.log('USER AUTH:', data);
 
         if (data.gid === 777) {
-            callback && callback({ status: 1, grid_size: GRID_SIZE, data: { balance: user.current_balance }, message: 'Player Authenticated!' })
+            callback && callback({ status: 1, data: { balance: user.current_balance }, message: 'Player Authenticated!' })
 
             CreateGameBoard();
+
+            IO_SERVER.emit('CREATE_BOARD', {grid_size: GRID_SIZE});
+
         } else {
             console.log('\nInvalid Game ID received...');
         }
     });
 
     _socket.on('START', (callback) => {
-        callback && callback(GRID_SIZE);
+        callback && callback({ grid_size: GRID_SIZE });
         console.log('\nSEND GRID SIZE');
     });
 
     // Evento de clique na célula
-    _socket.on('CLICK_CELL', (index, callback) => {
+    _socket.on('PICK_CELL', (index, callback) => {
         if (gameOver || gameBoard[index] === 'open') return;
 
         let result;
@@ -96,6 +99,9 @@ IO_SERVER.on('connection', (_socket) => {
 
         } else if (gameBoard[index] === 'cash') {
             result = 'cash';
+
+            user.current_cashout += user.current_bet_value * WeightedRandomNumber(MULTIPLY_WEIGHT);
+
             user.current_cash_count++;
 
         } else {
@@ -105,15 +111,18 @@ IO_SERVER.on('connection', (_socket) => {
 
         gameBoard[index] = 'open';
 
-        callback && callback({ index, result, score, gameOver });
+        callback && callback({ index: index, result: result, cashout: user.current_cashout });
 
         // Checar se o jogador encontrou uma bomba
         if (gameOver) {
             setTimeout(StartNewGame, 2000);
+            IO_SERVER.emit('CRASH');
         }
     });
 
     _socket.on('PLACE_BET', (data, callback) => {
+
+        console.log('Data content:', data);
 
         let numericBalance = parseFloat(user.current_balance); //so pra garantir que ta lidando com numeros
 
@@ -128,7 +137,7 @@ IO_SERVER.on('connection', (_socket) => {
             user.current_balance = numericBalance.toFixed(2);
             console.log('Novo saldo:', user.current_balance);
 
-            callback && callback({ status: 1, bet_id: user.current_bet_id, balance: user.current_balance});
+            callback && callback({ status: 1, bet_id: user.current_bet_id, balance: user.current_balance });
 
         } else {
             console.log('\n  Not Enough Balance!:', user.current_balance);
@@ -145,8 +154,8 @@ IO_SERVER.on('connection', (_socket) => {
             setTimeout(() => {
                 CreateGameBoard();
             }, 1000);
-        } else{
-            callback && callback({ status: 0, message: 'Invalid Bet ID!'});
+        } else {
+            callback && callback({ status: 0, message: 'Invalid Bet ID!' });
         }
 
     });

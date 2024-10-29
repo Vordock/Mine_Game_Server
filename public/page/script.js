@@ -11,10 +11,11 @@ const BALANCE_DISPLAY = document.getElementById("balance-display");
 const FEEDBACK_DISPLAY = document.getElementById("feedback-display");
 
 const BET_INPUT = document.getElementById("bet-input");
-const BET_BTN = document.getElementById("bet-button");
+const BET_BUTTON = document.getElementById("bet-button");
 
 let userAuthenticated;
-let bet_id = '';
+let current_bet_value = 1;
+let current_bet_id = '';
 
 SOCKET.on('connect', () => {
 
@@ -54,7 +55,7 @@ function UpdateCashout(cashout) {
 }
 
 function DrawBoard(gridSize) {
-    console.log(gridSize);
+
     GAME_CONTAINER.innerHTML = '';
     GAME_CONTAINER.style.gridTemplateColumns = `repeat(${gridSize}, 60px)`;
 
@@ -66,8 +67,8 @@ function DrawBoard(gridSize) {
         // Verifica se a célula está desbloqueada antes de permitir o clique
         CELL.addEventListener("click", () => {
             if (!CELL.classList.contains("blocked")) { // Só emite se não estiver bloqueada
-                SOCKET.emit('CLICK_CELL', i, (response) => {
-                    if(response.status === 1){
+                SOCKET.emit('PICK_CELL', i, (response) => {
+                    if (response.status === 1) {
                         OpenCell(response.index, response.result, response.cashout);
                     } else {
                         Feedback('Error in the response of emit CLICK_CELL: Status = 0');
@@ -79,6 +80,8 @@ function DrawBoard(gridSize) {
         GAME_CONTAINER.appendChild(CELL);
     }
 
+    BET_INPUT.value = current_bet_value;
+
     Feedback('New game ready!');
 }
 
@@ -89,7 +92,7 @@ function UnlockCells() {
 
 // Evento de saque
 WITHDRAW_BTN.addEventListener("click", () => {
-    SOCKET.emit('PLACE_CASHOUT', (response) => {
+    SOCKET.emit('PLACE_CASHOUT', { current_bet_id: current_current_bet_id }, (response) => {
 
         if (response.status === 1) {
             UpdateCashout(0); // Reiniciar pontuação
@@ -98,22 +101,42 @@ WITHDRAW_BTN.addEventListener("click", () => {
     });
 });
 
-// Evento de saque
-BET_BTN.addEventListener("click", () => {
-    SOCKET.emit('PLACE_BET', (response) => {
+BET_INPUT.addEventListener("blur", () => {
+    bet_value = parseFloat(BET_INPUT.value) || 0;
+    //console.log(bet_value); // Exibe o valor no console para conferência
+});
 
-        if (response.status === 1) {
-            UnlockCells();
+BET_INPUT.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        BET_INPUT.blur(); // Opcional: remove o foco do input após pressionar "Enter"
+    }
+});
 
-            Feedback('Bet confirmed! Lets play.');
-        }
-    });
+// Evento de aposta
+BET_BUTTON.addEventListener("click", () => {
+    console.log('Current bet value:', current_bet_value);
+
+    if (current_bet_value > 0) {
+
+        SOCKET.emit('PLACE_BET', { bet_value: current_bet_value }, (response) => {
+            if (response.status === 1) {
+                UnlockCells();
+
+                Feedback('Bet confirmed! Lets play.');
+            }
+        });
+    } else {
+        Feedback('Insert a valid value to bet.');
+    }
 });
 
 // Reiniciar o jogo
 RESTART_BTN.addEventListener("click", () => {
-    DrawBoard();
-    bet_id = '';
+    SOCKET.emit('START', (response) => {
+        DrawBoard(response.grid_size);
+        current_bet_id = '';
+    });
+
 });
 
 function Feedback(text) {
