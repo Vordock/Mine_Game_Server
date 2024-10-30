@@ -55,7 +55,6 @@ const BET_COEF = bet;
 
 const MULTIPLY_WEIGHT = [
     { min: 1, max: 1, weight: 0.5 },
-    { min: 0.45, max: 0.70, weight: 1 },
     { min: 0.30, max: 0.41, weight: 3 },
     { min: 0.20, max: 0.29, weight: 7.5 },
     { min: 0.13, max: 0.19, weight: 15 },
