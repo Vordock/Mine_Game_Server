@@ -26,6 +26,8 @@ SOCKET.on('connect', () => {
         userAuthenticated = response.status === 1;
 
         if (response.status === 1) {
+            UpdateBalance(response.data.balance);
+           
             DrawBoard();
         }
     })
@@ -50,14 +52,19 @@ function OpenCell(index, result, cashout) {
     } else {
         CELL.textContent = result;
         CELL.classList.add("revealed-cell");
-
+        WITHDRAW_BTN.disabled = false;
         UpdateCashout(cashout);
     }
 }
 
 // Atualizar pontuação
+function UpdateBalance(newValue) {
+    BALANCE_DISPLAY.textContent = `Balance: ${newValue}`;
+}
+
+// Atualizar pontuação
 function UpdateCashout(cashout) {
-    WITHDRAW_DISPLAY.textContent = `Cashout: ${cashout}`;
+    WITHDRAW_DISPLAY.textContent = `Cashout: ${cashout.toFixed(2)}`;
 }
 
 function DrawBoard() {
@@ -81,7 +88,7 @@ function DrawBoard() {
                 if (!CELL.classList.contains("blocked")) {
                     SOCKET.emit('PICK_CELL', i, (response) => {
 
-                        console.log(response);
+                        //console.log(response);
                         if (response.status === 1) {
                             OpenCell(response.index, response.result, response.cashout);
                         } else {
@@ -103,12 +110,9 @@ function DrawBoard() {
     });
 }
 
-
 function UnlockCells() {
     document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("blocked"));
-
 }
-
 
 WITHDRAW_BTN.addEventListener("click", () => {
     SOCKET.emit('PLACE_CASHOUT', { current_bet_id: current_current_bet_id }, (response) => {
@@ -121,8 +125,7 @@ WITHDRAW_BTN.addEventListener("click", () => {
 });
 
 BET_INPUT.addEventListener("blur", () => {
-    bet_value = parseFloat(BET_INPUT.value) || 0;
-
+    current_bet_value = parseFloat(BET_INPUT.value) || 0;
 });
 
 BET_INPUT.addEventListener("keydown", (event) => {
@@ -140,7 +143,10 @@ BET_BUTTON.addEventListener("click", () => {
             if (response.status === 1) {
                 UnlockCells();
                 BET_INPUT.disabled = true;
+
                 Feedback('Bet confirmed! Cells unlocked.');
+
+                UpdateBalance(response.balance);
             }
         });
 

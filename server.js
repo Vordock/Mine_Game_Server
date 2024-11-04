@@ -55,12 +55,36 @@ const BET_COEF = bet;
 
 const MULTIPLY_WEIGHT = [
     { min: 1, max: 1, weight: 0.5 },
-    { min: 0.30, max: 0.41, weight: 3 },
-    { min: 0.20, max: 0.29, weight: 7.5 },
-    { min: 0.13, max: 0.19, weight: 15 },
-    { min: 0.08, max: 0.12, weight: 35 },
-    { min: 0.025, max: 0.075, weight: 65 },
+    { min: 0.30, max: 0.41, weight: 5 },
+    { min: 0.20, max: 0.29, weight: 15 },
+    { min: 0.11, max: 0.19, weight: 35 },
+    { min: 0.05, max: 0.1, weight: 65 },
 ];
+
+// Função para arredondar valores com precisão de duas casas decimais
+function roundToTwo(value) {
+    return Math.round(value * 100) / 100;
+}
+
+function WeightedRandomNumber(weightsArray) {
+    // Calcula o peso total acumulado
+    const maxWeight = Math.max(...weightsArray.map(elem => elem.weight));
+
+    let randomWeight = roundToTwo(Math.random() * maxWeight);
+
+    for (let i = 0; i < weightsArray.length; i++) {
+        const element = weightsArray[i];
+
+        if (randomWeight <= element.weight) {
+            const numberGet = roundToTwo(Math.random() * (element.max - element.min) + element.min);
+
+            console.log('\nChance:', `${roundToTwo(randomWeight)} / ${element.weight}`);
+            console.log('Multiply:', numberGet);
+
+            return numberGet;
+        }
+    };
+}
 
 IO_SERVER.on('connection', (_socket) => {
     //console.log('\nPlayer Connected:', socket.id);
@@ -81,7 +105,7 @@ IO_SERVER.on('connection', (_socket) => {
     });
 
     // Evento de clique na célula
-    _socket.on('PICK_CELL', (index, callback) => {
+    _socket.on('PICK_CELL', async (index, callback) => {
         if (gameOver || gameBoard[index] === 'open') return;
 
         let result;
@@ -93,17 +117,8 @@ IO_SERVER.on('connection', (_socket) => {
             callback && callback({ status: 1, index: index, result: result, cashout: user.current_cashout });
 
         } else if (gameBoard[index] === 'cash') {
-
-            const GAIN = user.current_bet_value * WeightedRandomNumber(MULTIPLY_WEIGHT);
-
-            result = `+${GAIN}`;
-
-            user.current_cashout += GAIN;
-
-            user.current_cash_count++;
-
-            console.log(result);
-
+            // Gera o valor do multiplicador apenas uma vez
+            result = `+${CalculateCellValue()}`;
             callback && callback({ status: 1, index: index, result: result, cashout: user.current_cashout });
 
         } else {
@@ -133,6 +148,7 @@ IO_SERVER.on('connection', (_socket) => {
         if (numericBalance >= data.bet_value) {
             numericBalance -= data.bet_value;
 
+            user.current_bet_value = data.bet_value;
             user.current_balance = numericBalance.toFixed(2);
             console.log('Novo saldo:', user.current_balance);
 
@@ -161,35 +177,12 @@ IO_SERVER.on('connection', (_socket) => {
 
     _socket.on('disconnect', () => {
         console.log(`\nPlayer Disconnected: ${_socket.id}`);
+
+        user.ResetData();
     });
 
 });
 
-// Função para arredondar valores com precisão de duas casas decimais
-function roundToTwo(value) {
-    return Math.round(value * 100) / 100;
-}
-
-function WeightedRandomNumber(weightsArray) {
-    // Calcula o peso total acumulado
-    const totalWeight = weightsArray.reduce((total, elem) => total + elem.weight, 0);
-
-    let randomWeight = roundToTwo(Math.random() * totalWeight);
-
-    for (const elem of weightsArray) {
-
-        if (randomWeight <= elem.weight) {
-            // Gera o número aleatório no intervalo definido pelo elemento atual
-            const numberGet = roundToTwo(Math.random() * (elem.max - elem.min) + elem.min);
-
-            console.log('\nChance:', `${roundToTwo(randomWeight)} / ${elem.weight}`);
-            console.log('Multiply:', numberGet);
-            //console.log('Cashout Gain:', BET_COEF * numberGet);
-
-            return numberGet;
-        }
-    }
-}
 
 // Função para criar um novo tabuleiro
 function CreateGameBoard() {
@@ -234,13 +227,30 @@ function CalculateBet(betValue) {
 
 function CalculateCashout(cellValue) {
     if (user.current_bet_value > 0) {
-        user.current_cashout += +cellValue;
+        
+        user.current_cashout += roundToTwo(+cellValue);
 
         const numBalance = parseFloat(user.current_balance);
 
         return numBalance += user.current_cashout;
     }
 }
+
+function CalculateCellValue(){
+
+    const multiplier = WeightedRandomNumber(MULTIPLY_WEIGHT);
+
+    const GAIN = user.current_bet_value * multiplier;
+
+    user.current_cashout += GAIN;
+    user.current_cash_count++;
+
+    console.log('Multiplicador:', multiplier);
+    console.log('Ganho:', GAIN);
+
+    return multiplier;
+}
+
 
 HTTP_SERVER.listen(PORT, () => {
     console.log('\nSERVER ONLINE IN:', `localhost:${PORT}`);
