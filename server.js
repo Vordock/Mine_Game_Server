@@ -68,22 +68,16 @@ IO_SERVER.on('connection', (_socket) => {
     _socket.on('USER_AUTH', (data, callback) => {
 
         //console.log('USER AUTH:', data);
-
         if (data.gid === 777) {
             callback && callback({ status: 1, data: { balance: user.current_balance }, message: 'Player Authenticated!' })
-
-            CreateGameBoard();
-
-            IO_SERVER.emit('CREATE_BOARD', {grid_size: GRID_SIZE});
-
         } else {
             console.log('\nInvalid Game ID received...');
         }
     });
 
     _socket.on('START', (callback) => {
+        CreateGameBoard();
         callback && callback({ grid_size: GRID_SIZE });
-        console.log('\nSEND GRID SIZE');
     });
 
     // Evento de clique na célula
@@ -96,25 +90,31 @@ IO_SERVER.on('connection', (_socket) => {
             result = 'crash';
             gameOver = true;
 
-        } else if (gameBoard[index] === 'cash') {
-            result = 'cash';
+            callback && callback({ status: 1, index: index, result: result, cashout: user.current_cashout });
 
-            user.current_cashout += user.current_bet_value * WeightedRandomNumber(MULTIPLY_WEIGHT);
+        } else if (gameBoard[index] === 'cash') {
+
+            const GAIN = user.current_bet_value * WeightedRandomNumber(MULTIPLY_WEIGHT);
+
+            result = `+${GAIN}`;
+
+            user.current_cashout += GAIN;
 
             user.current_cash_count++;
 
+            console.log(result);
+
+            callback && callback({ status: 1, index: index, result: result, cashout: user.current_cashout });
+
         } else {
             result = 'empty';
-            console.log('Unknown cell value.');
+            callback && callback({ status: 0, index: index, result: result, cashout: user.current_cashout, message: 'Unknown cell value.' });
         }
 
         gameBoard[index] = 'open';
 
-        callback && callback({ index: index, result: result, cashout: user.current_cashout });
-
         // Checar se o jogador encontrou uma bomba
         if (gameOver) {
-            setTimeout(StartNewGame, 2000);
             IO_SERVER.emit('CRASH');
         }
     });
@@ -203,7 +203,7 @@ function CreateGameBoard() {
     while (bombsPlaced < BOMB_COUNT) {
         const index = Math.floor(Math.random() * gameBoard.length);
         if (gameBoard[index] === null) {
-            gameBoard[index] = 'bomb';
+            gameBoard[index] = 'crash';
             bombsPlaced++;
             cellsFree--;
         }
@@ -213,7 +213,7 @@ function CreateGameBoard() {
     while (cellsFree > 0) {
         const index = Math.floor(Math.random() * gameBoard.length);
         if (gameBoard[index] === null) {
-            gameBoard[index] = 'star';
+            gameBoard[index] = 'cash';
             starsPlaced++;
             cellsFree--;
         }
@@ -223,7 +223,6 @@ function CreateGameBoard() {
     gameOver = false;
     console.log('\nNEW BOARD READY!');
 }
-
 
 function CalculateBet(betValue) {
 
@@ -236,6 +235,10 @@ function CalculateBet(betValue) {
 function CalculateCashout(cellValue) {
     if (user.current_bet_value > 0) {
         user.current_cashout += +cellValue;
+
+        const numBalance = parseFloat(user.current_balance);
+
+        return numBalance += user.current_cashout;
     }
 }
 

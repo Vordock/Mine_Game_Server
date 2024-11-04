@@ -19,20 +19,22 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 30px;
     cursor: pointer;
 }
 
 .revealed-cell{
     background-color: white;
+    text-align: center;
+    line-height: 1.2;
 }
 
 .crash-cell{
-    background-color: rgb(173, 48, 48);
+    background-color: rgb(255, 117, 117);
 }
 
 .blocked{
-    background-color: rgba(128, 128, 128, 0.418);
+    background-color: rgb(90, 90, 90);
 }
 
 .bet-container {
@@ -48,6 +50,7 @@ body {
 #feedback-display{
     margin-top: 50px;
     font-size: 24px;
+    color: red;
     text-align: center;
 }
 
