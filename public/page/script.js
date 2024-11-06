@@ -17,6 +17,13 @@ let userAuthenticated;
 let current_bet_value = 1;
 let current_bet_id = "";
 
+function ResetData() {
+  current_bet_value = 1;
+  current_bet_id = "";
+
+  BET_INPUT.textContent = current_bet_value;
+}
+
 SOCKET.on("connect", () => {
   SOCKET.emit("USER_AUTH", { gid: 777, opt: "", oid: "" }, (response) => {
     console.log("AUTH RESPONSE: ", response);
@@ -56,6 +63,7 @@ function OpenCell(index, result, cashout) {
 // UPDATE BALANCE DISPLAY
 function UpdateBalance(newValue) {
   BALANCE_DISPLAY.textContent = `Balance: ${newValue}`;
+  console.log("Balance updated!");
 }
 
 // UPDATE CASHOUT DISPLAY
@@ -64,26 +72,28 @@ function UpdateCashout(cashout) {
 }
 
 function DrawBoard() {
-  SOCKET.emit("START", (start_response) => {
-    current_bet_id = "";
+  ResetData();
+  UpdateCashout(0);
 
+  SOCKET.emit("START", (start_response) => {
     BET_INPUT.disabled = false;
+    CASHOUT_BTN.disabled = true;
 
     GAME_CONTAINER.innerHTML = "";
     GAME_CONTAINER.style.gridTemplateColumns = `repeat(${start_response.grid_size}, 60px)`;
 
     for (
-      let i = 0;
-      i < start_response.grid_size * start_response.grid_size;
-      i++
+      let _index = 0;
+      _index < start_response.grid_size * start_response.grid_size;
+      _index++
     ) {
       const CELL = document.createElement("div");
       CELL.classList.add("cell", "blocked");
-      CELL.dataset.index = i;
+      CELL.dataset.index = _index;
 
       CELL.addEventListener("click", () => {
         if (!CELL.classList.contains("blocked")) {
-          SOCKET.emit("PICK_CELL", i, (response) => {
+          SOCKET.emit("PICK_CELL", _index, (response) => {
             //console.log(response);
             if (response.status === 1) {
               OpenCell(response.index, response.result, response.cashout);
@@ -92,7 +102,7 @@ function DrawBoard() {
             }
           });
         } else {
-          Feedback(`Cell ${i + 1} is locked. Bet to play.`);
+          Feedback(`Cell ${_index + 1} is locked. Bet to play.`);
         }
       });
 
@@ -112,22 +122,43 @@ function UnlockCells() {
 }
 
 CASHOUT_BTN.addEventListener("click", () => {
-  SOCKET.emit(
-    "PLACE_CASHOUT",
-    { current_bet_id: current_bet_id },
-    (response) => {
-      if (response.status === 1) {
-        Feedback("Cashout!");
+  CASHOUT_BTN.disabled = true;
 
-        UpdateCashout(response.cashout_value);
-        UpdateBalance(response.balance);
-        setTimeout(() => {
-          DrawBoard();
-          UpdateCashout(0);
-        }, 2000);
-      }
+  SOCKET.emit("PLACE_CASHOUT", { bet_id: current_bet_id }, (response) => {
+    console.log("Cashout Response:", response);
+    if (response.status === 1) {
+      Feedback("Cashout!");
+
+      UpdateCashout(response.cashout_value);
+      UpdateBalance(response.balance);
+
+      setTimeout(() => {
+        DrawBoard();
+        UpdateCashout(0);
+      }, 2000);
     }
-  );
+  });
+});
+
+BET_BTN.addEventListener("click", () => {
+  if (current_bet_value > 0) {
+    SOCKET.emit("PLACE_BET", { bet_value: current_bet_value }, (response) => {
+      console.log("Bet Response: ", response);
+
+      if (response.status === 1) {
+        UnlockCells();
+        BET_INPUT.disabled = true;
+
+        Feedback("Bet confirmed! Cells unlocked.");
+
+        current_bet_id = response.bet_id;
+
+        UpdateBalance(response.balance);
+      }
+    });
+  } else {
+    Feedback("Insert a valid value to bet.");
+  }
 });
 
 BET_INPUT.addEventListener("blur", () => {
@@ -137,23 +168,6 @@ BET_INPUT.addEventListener("blur", () => {
 BET_INPUT.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     BET_INPUT.blur();
-  }
-});
-
-BET_BTN.addEventListener("click", () => {
-  if (current_bet_value > 0) {
-    SOCKET.emit("PLACE_BET", { bet_value: current_bet_value }, (response) => {
-      if (response.status === 1) {
-        UnlockCells();
-        BET_INPUT.disabled = true;
-
-        Feedback("Bet confirmed! Cells unlocked.");
-
-        UpdateBalance(response.balance);
-      }
-    });
-  } else {
-    Feedback("Insert a valid value to bet.");
   }
 });
 

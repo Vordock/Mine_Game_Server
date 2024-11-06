@@ -88,7 +88,6 @@ function WeightedRandomNumber(weightsArray) {
         "\nChance:",
         `${roundToTwo(randomWeight)} / ${element.weight}`
       );
-      console.log("Multiply:", numberGet);
 
       return numberGet;
     }
@@ -96,7 +95,7 @@ function WeightedRandomNumber(weightsArray) {
 }
 
 IO_SERVER.on("connection", (_socket) => {
-  //console.log('\nPlayer Connected:', socket.id);
+  console.log("\nPlayer Connected:", _socket.id);
 
   _socket.on("USER_AUTH", (data, callback) => {
     //console.log('USER AUTH:', data);
@@ -117,7 +116,6 @@ IO_SERVER.on("connection", (_socket) => {
     callback && callback({ grid_size: GRID_SIZE });
   });
 
-  // Evento de clique na célula
   _socket.on("PICK_CELL", async (index, callback) => {
     if (gameOver || gameBoard[index] === "open") return;
 
@@ -200,11 +198,16 @@ IO_SERVER.on("connection", (_socket) => {
 
   // Evento de saque
   _socket.on("PLACE_CASHOUT", (data, callback) => {
-    if (user.current_cash_count > 0 && data.bet_id === user.bet_id) {
+    console.log("\nCASHOUT RESPONSE:", data);
+    if (user.current_cash_count > 0 && data.bet_id === user.current_bet_id) {
+      let numBalance = parseFloat(user.current_balance);
+      numBalance += user.current_cashout;
+      user.current_balance = numBalance.toFixed(2);
+
       callback &&
         callback({
           status: 1,
-          cashout_value: user.current_cashout,
+          cashout_value: roundToTwo(user.current_cashout),
           balance: user.current_balance,
         });
       setTimeout(() => {
@@ -252,7 +255,7 @@ function CreateGameBoard() {
 
   //console.log('gameBoard:', gameBoard);
   gameOver = false;
-  console.log("\nNEW BOARD READY!");
+  console.log("\nNEW GAME READY!");
 }
 
 function CalculateBet(betValue) {
@@ -278,6 +281,7 @@ function CalculateCellValue() {
 
   console.log("Multiply:", multiplier);
   console.log("Gain:", roundToTwo(GAIN));
+  console.log("Wins:", user.current_cash_count);
 
   return multiplier;
 }
