@@ -46,14 +46,14 @@ SOCKET.on("connect", () => {
 });
 
 // Revelar a célula com base no resultado do servidor
-function OpenCell(index, result, cashout) {
+function OpenCell(index, content, cashout) {
   const CELL = GAME_CONTAINER.children[index];
 
-  if (result === "crash") {
+  if (content === "crash") {
     CELL.textContent = "💣";
     CELL.classList.add("crash-cell"); // Adiciona classe de bomba
   } else {
-    CELL.textContent = result;
+    CELL.textContent = content;
     CELL.classList.add("revealed-cell");
     CASHOUT_BTN.disabled = false;
     UpdateCashout(cashout);
@@ -80,11 +80,11 @@ function DrawBoard() {
     CASHOUT_BTN.disabled = true;
 
     GAME_CONTAINER.innerHTML = "";
-    GAME_CONTAINER.style.gridTemplateColumns = `repeat(${start_response.grid_size}, 60px)`;
+    GAME_CONTAINER.style.gridTemplateColumns = `repeat(${start_response.board_size}, 60px)`;
 
     for (
       let _index = 0;
-      _index < start_response.grid_size * start_response.grid_size;
+      _index < start_response.board_size * start_response.board_size;
       _index++
     ) {
       const CELL = document.createElement("div");
@@ -96,7 +96,7 @@ function DrawBoard() {
           SOCKET.emit("PICK_CELL", _index, (response) => {
             //console.log(response);
             if (response.status === 1) {
-              OpenCell(response.index, response.result, response.cashout);
+              OpenCell(_index, response.content, response.cashout);
             } else {
               Feedback(`Server: ${response.message}`);
             }

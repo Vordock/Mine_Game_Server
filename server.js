@@ -113,43 +113,43 @@ IO_SERVER.on("connection", (_socket) => {
 
   _socket.on("START", (callback) => {
     CreateGameBoard();
-    callback && callback({ grid_size: GRID_SIZE });
+    callback && callback({ board_size: GRID_SIZE });
   });
 
   _socket.on("PICK_CELL", async (index, callback) => {
     if (gameOver || gameBoard[index] === "open") return;
 
-    let result;
+    let content;
 
     if (gameBoard[index] === "crash") {
-      result = "crash";
+      content = "crash";
       gameOver = true;
 
       callback &&
         callback({
           status: 1,
           index: index,
-          result: result,
+          content: content,
           cashout: parseFloat(user.current_cashout),
         });
     } else if (gameBoard[index] === "cash") {
       // Gera o valor do multiplicador apenas uma vez
       const CURRENT_GAIN = CalculateCellValue();
-      result = `+${CURRENT_GAIN}`;
+      content = `+${CURRENT_GAIN}`;
       callback &&
         callback({
           status: 1,
           index: index,
-          result: result,
+          content: content,
           cashout: CalculateNewCashout(CURRENT_GAIN),
         });
     } else {
-      result = "empty";
+      content = "empty";
       callback &&
         callback({
           status: 0,
           index: index,
-          result: result,
+          content: content,
           cashout: user.current_cashout,
           message: "Unknown cell value.",
         });
