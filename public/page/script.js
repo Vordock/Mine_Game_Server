@@ -181,6 +181,10 @@ let feedback_list = [];
 function Feedback(text) {
   feedback_list.push(text);
 
+  if (feedback_list.length > 3) {
+    feedback_list.shift();
+  }
+
   const CLEAR = () => {
     FEEDBACK_DISPLAY.textContent = "";
     diplayCheck = false;
