@@ -33,7 +33,7 @@ APP.get("/games/9", (req, res) =>
 class User {
   constructor(name) {
     this.name = name;
-    this.current_balance = "3521";
+    this.current_balance = "77";
     this.current_bet_id = "";
     this.current_bet_value = 0;
     this.current_cash_count = 0;
@@ -41,7 +41,7 @@ class User {
   }
 
   ResetData() {
-    this.current_balance = "3521";
+    this.current_balance = "77";
     this.current_bet_id = "";
     this.current_bet_value = 0;
     this.current_cash_count = 0;
