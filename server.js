@@ -33,7 +33,7 @@ APP.get("/games/9", (req, res) =>
 class User {
   constructor(name) {
     this.name = name;
-    this.current_balance = "77";
+    this.current_balance = "10";
     this.current_bet_id = "";
     this.current_bet_value = 0;
     this.current_cash_count = 0;
@@ -157,7 +157,7 @@ IO_SERVER.on("connection", (_socket) => {
 
     gameBoard[index] = "open";
 
-    // Checar se o jogador encontrou uma bomba
+    // Check crash
     if (gameOver) {
       IO_SERVER.emit("CRASH");
     }
@@ -166,7 +166,7 @@ IO_SERVER.on("connection", (_socket) => {
   _socket.on("PLACE_BET", (data, callback) => {
     console.log("Data content:", data);
 
-    let numericBalance = parseFloat(user.current_balance); //so pra garantir que ta lidando com numeros
+    let numericBalance = parseFloat(user.current_balance);
 
     const NEW_BET_ID = randomUUID();
     user.current_bet_id = NEW_BET_ID;
@@ -196,7 +196,7 @@ IO_SERVER.on("connection", (_socket) => {
     }
   });
 
-  // Evento de saque
+  // CASHOUT EVENT
   _socket.on("PLACE_CASHOUT", (data, callback) => {
     console.log("\nCASHOUT RESPONSE:", data);
     if (user.current_cash_count > 0 && data.bet_id === user.current_bet_id) {
@@ -225,7 +225,7 @@ IO_SERVER.on("connection", (_socket) => {
   });
 });
 
-// Função para criar um novo tabuleiro
+// NEW BOARD
 function CreateGameBoard() {
   gameBoard = Array(GRID_SIZE * GRID_SIZE).fill(null);
 
@@ -233,7 +233,7 @@ function CreateGameBoard() {
   let bombsPlaced = 0;
   let cellsFree = gameBoard.length;
 
-  // Colocar bombas
+  // SET BOMBS
   while (bombsPlaced < BOMB_COUNT) {
     const index = Math.floor(Math.random() * gameBoard.length);
     if (gameBoard[index] === null) {
@@ -243,7 +243,7 @@ function CreateGameBoard() {
     }
   }
 
-  // Colocar estrelas
+  // SET CASHS
   while (cellsFree > 0) {
     const index = Math.floor(Math.random() * gameBoard.length);
     if (gameBoard[index] === null) {
@@ -288,8 +288,4 @@ function CalculateCellValue() {
 
 HTTP_SERVER.listen(PORT, () => {
   console.log("\nSERVER ONLINE IN:", `localhost:${PORT}`);
-  // Inicializar o jogo no início
-  //CreateGameBoard();
-
-  //setInterval(() => (WeightedRandomNumber(MULTIPLY_WEIGHT)), 1000);
 });
